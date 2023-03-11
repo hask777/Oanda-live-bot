@@ -69,6 +69,27 @@ class OandaAPI():
             return status_code, None
 
         return status_code, OandaAPI.candles_to_df(data['candles'])
+
+    def place_trade(self, pair, units):
+        url = f"{defs.OANDA_URL}/accounts/{defs.ACCOUNT_ID}/orders"
+
+        data = {
+            "order": {
+                "units": units,
+                "instrument": pair,
+                "timeInForce": "FOK",
+                "type": "MARKET",
+                "positionFill": "DEFAULT"
+            }
+        }
+
+        status_code, json_data = self.make_request(url, verb='post', data=json.dumps(data), code_ok=201)
+
+        if "orderFillTransaction" in json_data and "tradeOpened" in json_data["orderFillTransaction"]:
+            return int(json_data["orderFillTransaction"]["tradeOpened"]["tradeID"])
+
+        return None
+
         
     @classmethod
     def candles_to_df(cls, json_data):
@@ -95,3 +116,4 @@ if __name__ == "__main__":
     api = OandaAPI()
     res, df = api.fetch_candles("EUR_USD")
     print(df)
+    
